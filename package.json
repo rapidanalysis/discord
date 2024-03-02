@@ -1,0 +1,24 @@
+{
+  "name": "rapidanalysis-discord",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/crpz1/rapidanalysis-discord.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/crpz1/rapidanalysis-discord/issues"
+  },
+  "homepage": "https://github.com/crpz1/rapidanalysis-discord#readme",
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.4.5",
+    "node-fetch": "2"
+  }
+}
