@@ -20,5 +20,10 @@
     "discord.js": "^14.14.1",
     "dotenv": "^16.4.5",
     "node-fetch": "2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^8",
+    "eslint": "^8",
+    "globals": "^15.0.0"
   }
 }
