@@ -19,7 +19,7 @@ client.on("messageCreate", (msg) => {
     console.log(msg.content);
     
     if (msg.content.startsWith(".ask")) {
-        const prompt = msg.content.split(" ")[1];
+        const prompt = msg.content.split(" ").slice(1).join(" ");
         rapid.makeRequest("POST", "generate/text-from-text", { prompt }).then(res => {
             msg.reply(res.output[0]);
         })
