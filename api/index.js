@@ -1,3 +1,8 @@
+/**
+ * @typedef {Object} RapidAnalysisResponse
+ * @property {number} version
+ * @property {string[]} output
+ */
 class RESTClient {
     #apiKey;
 
@@ -15,7 +20,7 @@ class RESTClient {
      * @param {("GET"|"POST"|"PUT"|"PATCH"|"DELETE"|"OPTIONS")} method - The HTTP method to use when fetching. 
      * @param {string} endpoint - The endpoint URL to be fetched. 
      * @param {Object} [body] - JSON payload to be sent when posting. 
-     * @returns {Promise<Object>} - The JSON response from the API. 
+     * @returns {Promise<RapidAnalysisResponse>} - The JSON response from the API. 
      */
     makeRequest(method, endpoint, body) {
         return new Promise((resolve, reject) => {
