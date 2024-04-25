@@ -3,6 +3,9 @@
  * @property {number} version
  * @property {string[]} output
  */
+
+const fetch = require("node-fetch");
+
 class RESTClient {
     #apiKey;
 
@@ -26,12 +29,18 @@ class RESTClient {
         return new Promise((resolve, reject) => {
             fetch(`https://api.weburban.com/${endpoint}`, {
                 method,
-                body,
+                body: JSON.stringify(body),
                 headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
                     "x-api-key": this.#apiKey
                 }
             }).then(res => {
-                res.json().then(json => resolve(json));
+                if (!res.ok) {
+                    res.json().then(json => reject(json.message));
+                } else {
+                    res.json().then(json => resolve(json));
+                }     
             }).catch(err => reject(err));
         });
     }
