@@ -25,3 +25,17 @@ client.on("messageCreate", (msg) => {
         })
     }
 });
+
+client.on("messageCreate", (msg) => {
+    if (msg.content.startsWith(".sum")) {
+        const fulltext = msg.content.split(" ").slice(1).join(" ");
+        console.log(fulltext.length);
+        if(fulltext.length < 500) return msg.reply("Text is too short. Please provide a text with more than 500 characters.");
+        rapid.makeRequest("POST", "text/to-summary", {
+            "percent": 0.25,
+            "fulltext": fulltext
+        }).then(res => {
+            msg.reply(res.Output);
+        })
+    }
+});
