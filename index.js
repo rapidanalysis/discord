@@ -27,7 +27,7 @@ client.on("messageCreate", (msg) => {
 });
 
 client.on("messageCreate", (msg) => {
-    if (msg.content.startsWith(".sum")) {
+    if (msg.content.startsWith(".parasum")) {
         const fulltext = msg.content.split(" ").slice(1).join(" ");
         console.log(fulltext.length);
         if(fulltext.length < 500) return msg.reply("Text is too short. Please provide a text with more than 500 characters.");
@@ -37,5 +37,36 @@ client.on("messageCreate", (msg) => {
         }).then(res => {
             msg.reply(res.Output);
         })
+    }
+});
+
+client.on("messageCreate", async (msg) => { // Summarize last n messages
+    if (msg.content.startsWith(".sum")) {
+        let limitChat = msg.content.split(" ")[1]; // Number of chat to get
+        limitChat = parseInt(limitChat) + 1;
+
+        if (!parseInt(limitChat)) return msg.reply("Please provide a valid number of messages to summarize.");
+        const channel = msg.channel;
+
+        try {
+            const messages = await channel.messages.fetch({ limit: limitChat }); // Fetch last limitChat messages
+            const messageContents = messages.filter(m => !m.content.startsWith('.sum') && !m.content.startsWith('.ask')).map(m => m.content);
+            const paragraph = messageContents.join(' '); // Join all messages into a single paragraph
+            percent = 0.25;
+            if(paragraph.length < 500) return msg.reply("Text is too short. Please provide a text with more than 500 characters.");
+            if(paragraph.length > 6000) {
+                msg.reply("Text is too long. Please provide a text with less than 6000 characters.");
+                return;
+            }
+
+            rapid.makeRequest("POST", "text/to-summary", {
+                "percent": percent,
+                "fulltext": paragraph
+            }).then(res => {
+                msg.reply(res.Output);
+            })
+        } catch (error) {
+            console.error('Error fetching messages:', error);
+        }
     }
 });
