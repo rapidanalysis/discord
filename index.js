@@ -40,16 +40,16 @@ client.on("messageCreate", (msg) => {
     }
 });
 
-client.on("messageCreate", async (msg) => { // Summarize last n messages
+client.on("messageCreate", async (msg) => {
     if (msg.content.startsWith(".sum")) {
-        let limitChat = msg.content.split(" ")[1]; // Number of chat to get
+        let limitChat = msg.content.split(" ")[1];
         limitChat = parseInt(limitChat) + 1;
 
         if (!parseInt(limitChat)) return msg.reply("Please provide a valid number of messages to summarize.");
         const channel = msg.channel;
 
         try {
-            const messages = await channel.messages.fetch({ limit: limitChat }); // Fetch last limitChat messages
+            const messages = await channel.messages.fetch({ limit: limitChat }); // Fetch last 10 messages
             const messageContents = messages.filter(m => !m.content.startsWith('.sum') && !m.content.startsWith('.ask')).map(m => m.content);
             const paragraph = messageContents.join(' '); // Join all messages into a single paragraph
             percent = 0.25;
@@ -58,15 +58,51 @@ client.on("messageCreate", async (msg) => { // Summarize last n messages
                 msg.reply("Text is too long. Please provide a text with less than 6000 characters.");
                 return;
             }
-
             rapid.makeRequest("POST", "text/to-summary", {
                 "percent": percent,
                 "fulltext": paragraph
             }).then(res => {
-                msg.reply(res.Output);
+                summaryResult = res.Output; // Store the summary result
+                msg.reply(summaryResult);
+
+                const row = new ActionRowBuilder()
+                        .addComponents(
+                            new ButtonBuilder()
+                                .setCustomId('positive')
+                                .setLabel('Good')
+                                .setStyle('Success'),
+                            new ButtonBuilder()
+                                .setCustomId('negative')
+                                .setLabel('Bad')
+                                .setStyle('Danger')
+                        );
+
+                // Send the feedback buttons in a separate message
+                msg.reply({ content: 'Please provide your feedback:', components: [row] });
             })
         } catch (error) {
             console.error('Error fetching messages:', error);
         }
     }
+});
+
+client.on('interactionCreate', async interaction => {
+    if (!interaction.isButton()) return;
+
+    if (interaction.customId === 'positive') {
+        await interaction.reply({ content: 'Thank you for your feedback!', ephemeral: true });
+    } else if (interaction.customId === 'negative') {
+        // Save the summary result to a file
+        fs.appendFile('negative_summary.txt', ' Negative Result:' + summaryResult + '\n', err => {
+            if (err) {
+                console.error(err);
+            } else {
+                console.log('Negative feedback summary saved to negative_summary.txt');
+            }
+        });
+        await interaction.reply({ content: 'Thank you for your feedback!', ephemeral: true });
+    }
+
+    // Delete the button message
+    await interaction.message.delete();
 });
