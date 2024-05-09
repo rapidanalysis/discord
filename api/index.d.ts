@@ -2,7 +2,7 @@ export = RESTClient;
 /**
  * @typedef {Object} RapidAnalysisResponse
  * @property {number} version
- * @property {string[]} output
+ * @property {string} Output
  */
 declare class RESTClient {
     /**
@@ -26,5 +26,5 @@ declare namespace RESTClient {
 }
 type RapidAnalysisResponse = {
     version: number;
-    output: string[];
+    Output: string;
 };

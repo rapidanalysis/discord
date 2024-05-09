@@ -8,6 +8,8 @@ const RapidClient = require("./api");
 require('dotenv').config();
 
 const rapid = new RapidClient(process.env.RAPIDANALYSIS_TOKEN);
+const { ActionRowBuilder, ButtonBuilder } = require('discord.js');
+const fs = require('fs');
 
 client.login(process.env.DISCORD_TOKEN);
 
@@ -15,32 +17,27 @@ client.on("ready", () => {
     console.log("Logged in to Discord.");
 });
 
-client.on("messageCreate", (msg) => {
+client.on("messageCreate", async (msg) => {
     console.log(msg.content);
-    
     if (msg.content.startsWith(".ask")) {
         const prompt = msg.content.split(" ").slice(1).join(" ");
+        console.log(prompt);
         rapid.makeRequest("POST", "generate/text-from-text", { prompt }).then(res => {
             msg.reply(res.output[0]);
         })
     }
-});
-
-client.on("messageCreate", (msg) => {
     if (msg.content.startsWith(".parasum")) {
         const fulltext = msg.content.split(" ").slice(1).join(" ");
-        console.log(fulltext.length);
-        if(fulltext.length < 500) return msg.reply("Text is too short. Please provide a text with more than 500 characters.");
+        percent = 0.25;
+        if (fulltext.length < 500) return msg.reply("Text is too short. Please provide a text with more than 500 characters.");
+        if (fulltext.length < 1000) percent = 0.5;
         rapid.makeRequest("POST", "text/to-summary", {
-            "percent": 0.25,
+            "percent": percent,
             "fulltext": fulltext
         }).then(res => {
             msg.reply(res.Output);
         })
     }
-});
-
-client.on("messageCreate", async (msg) => {
     if (msg.content.startsWith(".sum")) {
         let limitChat = msg.content.split(" ")[1];
         limitChat = parseInt(limitChat) + 1;
@@ -53,8 +50,8 @@ client.on("messageCreate", async (msg) => {
             const messageContents = messages.filter(m => !m.content.startsWith('.sum') && !m.content.startsWith('.ask')).map(m => m.content);
             const paragraph = messageContents.join(' '); // Join all messages into a single paragraph
             percent = 0.25;
-            if(paragraph.length < 500) return msg.reply("Text is too short. Please provide a text with more than 500 characters.");
-            if(paragraph.length > 6000) {
+            if (paragraph.length < 500) return msg.reply("Text is too short. Please provide a text with more than 500 characters.");
+            if (paragraph.length > 6000) {
                 msg.reply("Text is too long. Please provide a text with less than 6000 characters.");
                 return;
             }
@@ -66,16 +63,16 @@ client.on("messageCreate", async (msg) => {
                 msg.reply(summaryResult);
 
                 const row = new ActionRowBuilder()
-                        .addComponents(
-                            new ButtonBuilder()
-                                .setCustomId('positive')
-                                .setLabel('Good')
-                                .setStyle('Success'),
-                            new ButtonBuilder()
-                                .setCustomId('negative')
-                                .setLabel('Bad')
-                                .setStyle('Danger')
-                        );
+                    .addComponents(
+                        new ButtonBuilder()
+                            .setCustomId('positive')
+                            .setLabel('Good')
+                            .setStyle('Success'),
+                        new ButtonBuilder()
+                            .setCustomId('negative')
+                            .setLabel('Bad')
+                            .setStyle('Danger')
+                    );
 
                 // Send the feedback buttons in a separate message
                 msg.reply({ content: 'Please provide your feedback:', components: [row] });
