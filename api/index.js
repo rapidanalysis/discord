@@ -39,7 +39,10 @@ class RESTClient {
                 if (!res.ok) {
                     res.json().then(json => reject(json.message));
                 } else {
-                    res.json().then(json => resolve(json));
+                    res.json().then(json => {
+                        const fixedJson = Object.fromEntries(Object.entries(json).map(([key, value]) => {[key.toLowerCase(), value]}));
+                        resolve(fixedJson);
+                    });
                 }     
             }).catch(err => reject(err));
         });
