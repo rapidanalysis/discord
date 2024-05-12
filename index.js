@@ -8,74 +8,116 @@ const RapidClient = require("./api");
 require('dotenv').config();
 
 const rapid = new RapidClient(process.env.RAPIDANALYSIS_TOKEN);
+const { SlashCommandBuilder } = require('@discordjs/builders');
 const { ActionRowBuilder, ButtonBuilder } = require('discord.js');
 const fs = require('fs');
 
 client.login(process.env.DISCORD_TOKEN);
 
-client.on("ready", () => {
+let summaryResult = 'Not Found';
+let guildID = '';
+
+client.on('ready', () => {
     console.log("Logged in to Discord.");
+
+    const guild = client.guilds.cache.first();
+    if (!guild) {
+        console.error("Bot is not in any guilds!");
+        return;
+    }
+    guildID = guild.id;
+
+    const askCommand = new SlashCommandBuilder()
+        .setName('ask')
+        .setDescription('Generates text from a given prompt')
+        .addStringOption(option =>
+            option.setName('prompt')
+                .setDescription('The prompt to generate text from')
+                .setRequired(true));
+
+    const parasumCommand = new SlashCommandBuilder()
+        .setName('parasum')
+        .setDescription('Summarizes a given paragraph')
+        .addStringOption(option =>
+            option.setName('paragraph')
+                .setDescription('The paragraph to summarize')
+                .setRequired(true));
+
+    const sumCommand = new SlashCommandBuilder()
+        .setName('sum')
+        .setDescription('Summarizes the last n messages in the current channel')
+        .addIntegerOption(option =>
+            option.setName('limit')
+                .setDescription('Number of messages to summarize')
+                .setRequired(true));
+
+    client.guilds.cache.get(guildID).commands.set([askCommand, parasumCommand, sumCommand]);
 });
 
-client.on("messageCreate", async (msg) => {
-    console.log(msg.content);
-    if (msg.content.startsWith(".ask")) {
-        const prompt = msg.content.split(" ").slice(1).join(" ");
-        console.log(prompt);
+client.on('interactionCreate', async interaction => {
+    if (!interaction.isCommand()) return;
+
+    const { commandName } = interaction;
+
+    if (commandName === 'ask') {
+        const prompt = interaction.options.getString('prompt');
         rapid.makeRequest("POST", "generate/text-from-text", { prompt }).then(res => {
-            msg.reply(res.output[0]);
+            interaction.reply(res.output[0]);
         })
     }
-    if (msg.content.startsWith(".parasum")) {
-        const fulltext = msg.content.split(" ").slice(1).join(" ");
-        percent = 0.25;
-        if (fulltext.length < 500) return msg.reply("Text is too short. Please provide a text with more than 500 characters.");
-        if (fulltext.length < 1000) percent = 0.5;
+    if (commandName === 'parasum') {
+        const fulltext = interaction.options.getString('paragraph');
+        let percent = 0.25;
+        if(fulltext.length < 500) return interaction.reply("Text is too short. Please provide a text with more than 500 characters.");
+        if(fulltext.length < 1000) percent = 0.5;
+        await interaction.deferReply(); // Acknowledge the interaction
         rapid.makeRequest("POST", "text/to-summary", {
             "percent": percent,
             "fulltext": fulltext
         }).then(res => {
-            msg.reply(res.Output);
+            interaction.editReply(res.Output); // Edit the initial reply
         })
     }
-    if (msg.content.startsWith(".sum")) {
-        let limitChat = msg.content.split(" ")[1];
+    if (commandName === 'sum') {
+        let limitChat = interaction.options.getInteger('limit');
         limitChat = parseInt(limitChat) + 1;
 
-        if (!parseInt(limitChat)) return msg.reply("Please provide a valid number of messages to summarize.");
-        const channel = msg.channel;
+        if (!parseInt(limitChat)) return interaction.reply("Please provide a valid number of messages to summarize.");
+        const channel = interaction.channel;
 
         try {
             const messages = await channel.messages.fetch({ limit: limitChat }); // Fetch last 10 messages
-            const messageContents = messages.filter(m => !m.content.startsWith('.sum') && !m.content.startsWith('.ask')).map(m => m.content);
+            const messageContents = messages.filter(
+                m => !m.content.startsWith('/sum') && !m.content.startsWith('/ask') && !m.author.bot).map(m => m.content);
             const paragraph = messageContents.join(' '); // Join all messages into a single paragraph
             percent = 0.25;
-            if (paragraph.length < 500) return msg.reply("Text is too short. Please provide a text with more than 500 characters.");
-            if (paragraph.length > 6000) {
-                msg.reply("Text is too long. Please provide a text with less than 6000 characters.");
+            if(paragraph.length < 500) return interaction.reply("Text is too short. Please provide a text with more than 500 characters.");
+            if(paragraph.length > 6000) {
+                interaction.reply("Text is too long. Please provide a text with less than 6000 characters.");
                 return;
             }
+            await interaction.deferReply();
             rapid.makeRequest("POST", "text/to-summary", {
                 "percent": percent,
                 "fulltext": paragraph
-            }).then(res => {
+            }).then(async res => {
                 summaryResult = res.Output; // Store the summary result
-                msg.reply(summaryResult);
+                await interaction.editReply(res.Output);
 
                 const row = new ActionRowBuilder()
-                    .addComponents(
-                        new ButtonBuilder()
-                            .setCustomId('positive')
-                            .setLabel('Good')
-                            .setStyle('Success'),
-                        new ButtonBuilder()
-                            .setCustomId('negative')
-                            .setLabel('Bad')
-                            .setStyle('Danger')
-                    );
+                        .addComponents(
+                            new ButtonBuilder()
+                                .setCustomId('positive')
+                                .setLabel('Good')
+                                .setStyle('Success'),
+                            new ButtonBuilder()
+                                .setCustomId('negative')
+                                .setLabel('Bad')
+                                .setStyle('Danger')
+                        );
 
                 // Send the feedback buttons in a separate message
-                msg.reply({ content: 'Please provide your feedback:', components: [row] });
+                await interaction.followUp({ content: 'Please provide your feedback:', components: [row] });
             })
         } catch (error) {
             console.error('Error fetching messages:', error);
