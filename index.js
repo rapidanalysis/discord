@@ -75,7 +75,7 @@ client.on('interactionCreate', async interaction => {
             "percent": percent,
             "fulltext": fulltext
         }).then(res => {
-            interaction.editReply(res.Output); // Edit the initial reply
+            interaction.editReply(res.output[0]); // Edit the initial reply
         })
     }
     if (commandName === 'sum') {
@@ -101,8 +101,8 @@ client.on('interactionCreate', async interaction => {
                 "percent": percent,
                 "fulltext": paragraph
             }).then(async res => {
-                summaryResult = res.Output; // Store the summary result
-                await interaction.editReply(res.Output);
+                summaryResult = res.output[0]; // Store the summary result
+                await interaction.editReply(res.output[0]);
 
                 const row = new ActionRowBuilder()
                         .addComponents(

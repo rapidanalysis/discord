@@ -41,6 +41,9 @@ class RESTClient {
                 } else {
                     res.json().then(json => {
                         const fixedJson = Object.fromEntries(Object.entries(json).map(([key, value]) => {[key.toLowerCase(), value]}));
+                        if (typeof fixedJson.output == "string") {
+                            fixedJson.output = [fixedJson.output];
+                        }
                         resolve(fixedJson);
                     });
                 }     
