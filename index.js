@@ -23,13 +23,6 @@ let percent = 0.25;
 client.on('ready', () => {
     console.log("Logged in to Discord.");
 
-    const guild = client.guilds.cache.first();
-    if (!guild) {
-        console.error("Bot is not in any guilds!");
-        return;
-    }
-    guildID = guild.id;
-
     const regCommand = new SlashCommandBuilder()
         .setName('reg')
         .setDescription('Registers user')
@@ -52,7 +45,11 @@ client.on('ready', () => {
         .addStringOption(option =>
             option.setName('paragraph')
                 .setDescription('The paragraph to summarize')
-                .setRequired(true));
+                .setRequired(true))
+        .addIntegerOption(option =>
+                option.setName('percentage')
+                .setDescription('Percentage of summarization to shorten the text to. Default is 25%. Need to be from 10% to 75%')
+                .setRequired(false)); // Make this option not required
 
     const sumCommand = new SlashCommandBuilder()
         .setName('sum')
@@ -60,9 +57,21 @@ client.on('ready', () => {
         .addIntegerOption(option =>
             option.setName('limit')
                 .setDescription('Number of messages to summarize')
+                .setRequired(true))
+        .addIntegerOption(option =>
+            option.setName('percentage')
+                .setDescription('Percentage of summarization to shorten the text to. Default is 25%. Need to be from 20% to 75%')
+                .setRequired(false)); // Make this option not required
+
+    const prefCommand = new SlashCommandBuilder()
+        .setName('pref')
+        .setDescription('Set the percentage of summarization')
+        .addIntegerOption(option =>
+            option.setName('percentage')
+                .setDescription('Percentage of summarization to shorten the text to (20%-75%)')
                 .setRequired(true));
 
-    client.guilds.cache.get(guildID).commands.set([regCommand, askCommand, parasumCommand, sumCommand]);
+    client.guilds.cache.get('1223195046854266910').commands.set([regCommand, askCommand, parasumCommand, sumCommand, prefCommand]);
 });
 
 client.on('interactionCreate', async interaction => {
@@ -82,21 +91,32 @@ client.on('interactionCreate', async interaction => {
             } else {
                 // API key is valid, save it to the database
                 try {
-                    const connection = await mysql.createConnection(dbConfig);
-                    const sql = 'INSERT INTO user_profile (uid, percent, apikey) VALUES (?, ?, ?)';
-                    await connection.execute(sql, [userId, percent, apiKey]);
-                    await connection.end();
-                    await interaction.reply('Your API key has been registered. You can use the bot now.');
-                } catch (err) {
-                    console.error('Failed to save to database:', err);
+                const connection = await mysql.createConnection(dbConfig);
+                const [rows] = await connection.execute('SELECT * FROM user_profile WHERE uid = ?', [userId]);
+
+                if (rows.length === 0) {
+                    // The user doesn't exist in the table, so insert a new row
+                    await connection.execute('INSERT INTO user_profile (uid, apikey) VALUES (?, ?)', [userId, apiKey]);
+                } else {
+                    // The user already exists in the table, so update the existing row
+                    await connection.execute('UPDATE user_profile SET apikey = ? WHERE uid = ?', [apiKey, userId]);
                 }
+                await connection.end();
+                
+                // Delete the user's reply
+                const userReply = await interaction.reply({ content: 'API Key updated successfully.', fetchReply: true });
+                setTimeout(() => userReply.delete(), 2000); // Delete after 2 seconds
+            } catch (err) {
+                console.error(err);
+                await interaction.reply('Failed to update API Key.');
+            }
             }
         });
     } else {
         // Check if the user is registered
         console.log('Checking if user is registered');
         const connection = await mysql.createConnection(dbConfig);
-        const [rows] = await connection.execute('SELECT apikey FROM user_profile WHERE uid = ?', [userId]);
+        const [rows] = await connection.execute('SELECT apikey, percent FROM user_profile WHERE uid = ?', [userId]);
         await connection.end();
 
         if (rows.length === 0) {
@@ -106,6 +126,7 @@ client.on('interactionCreate', async interaction => {
             // User is registered
             const apiKey = rows[0].apikey;
             const rapid = new RapidClient(apiKey);
+            percent = Number(rows[0].percent);
 
             if (commandName === 'ask') {
                 const prompt = interaction.options.getString('prompt');
@@ -116,14 +137,28 @@ client.on('interactionCreate', async interaction => {
             if (commandName === 'parasum') {
                 const fulltext = interaction.options.getString('paragraph');
                 if(fulltext.length < 500) return interaction.reply("Text is too short. Please provide a text with more than 500 characters.");
-                if(fulltext.length < 1000) percent = 0.5;
-                await interaction.deferReply(); // Acknowledge the interaction
+                if(paragraph.length > 6000) {
+                    interaction.reply("Text is too long. Please provide a text with less than 6000 characters.");
+                    return;
+                }
+
+                const percentage = interaction.options.getInteger('percentage');
+                    if (percentage < 20 || percentage > 75) {
+                        await interaction.reply('Percentage must be between 20% and 75%');
+                        return;
+                    }
+                    // Use the percentage value
+                percent = percentage / 100;
+
                 rapid.makeRequest("POST", "text/to-summary", {
                     "percent": percent,
                     "fulltext": fulltext
                 }).then(res => {
-                    interaction.editReply(res.output[0]); // Edit the initial reply
-                })
+                    interaction.reply({content: res.output[0], ephemeral: false}); // Edit the initial reply
+                }).catch(err => {
+                    console.error(err);
+                    // Handle or throw the error as needed
+                });
             }
             if (commandName === 'sum') {
                 let limitChat = interaction.options.getInteger('limit');
@@ -134,16 +169,35 @@ client.on('interactionCreate', async interaction => {
         
                 try {
                     const messages = await channel.messages.fetch({ limit: limitChat }); // Fetch last 10 messages
-                    const messageContents = messages.filter(
-                        m => !m.content.startsWith('/sum') && !m.content.startsWith('/ask') && !m.author.bot).map(m => m.content);
+                    
+                    // Filter and map messages in one step
+                    const messageContents = messages.reduce((acc, message) => {
+                        if (!message.content.startsWith('/sum') && !message.content.startsWith('/ask') && !message.author.bot) {
+                            acc.push(message.content);
+                        }
+                        return acc;
+                    }, []);
+
                     paragraph = messageContents.join(' '); // Join all messages into a single paragraph
-                    percent = 0.25;
+
                     if(paragraph.length < 500) return interaction.reply("Text is too short. Please provide a text with more than 500 characters.");
                     if(paragraph.length > 6000) {
                         interaction.reply("Text is too long. Please provide a text with less than 6000 characters.");
                         return;
                     }
-                    await interaction.deferReply();
+
+                    const percentage = interaction.options.getInteger('percentage');
+                    if (percentage) { // Check if the percentage is provided
+                        // Check if the percentage is within the range
+                        if (percentage < 20 || percentage > 75) {
+                            await interaction.reply('Percentage must be between 20% and 75%');
+                            return;
+                        }
+                        // Use the percentage value
+                        percent = percentage / 100;
+                    }
+                    
+                    interaction.deferReply({content: "The Bot is processing", ephemeral: false});
                     rapid.makeRequest("POST", "text/to-summary", {
                         "percent": percent,
                         "fulltext": paragraph
@@ -164,10 +218,29 @@ client.on('interactionCreate', async interaction => {
                                 );
         
                         // Send the feedback buttons in a separate message
-                        await interaction.followUp({ content: 'Please provide your feedback:', components: [row] });
+                        await interaction.followUp({ content: 'Please provide your feedback:', components: [row], ephemeral: false});
                     })
                 } catch (error) {
                     console.error('Error fetching messages:', error);
+                }
+            }
+            if (commandName === 'pref') {
+                let percentage = interaction.options.getInteger('percentage');
+            
+                if (percentage < 20 || percentage > 75) {
+                    await interaction.reply('Percentage must be between 20% and 75%');
+                    return;
+                }
+                percentage = percentage / 100;
+            
+                // Save the percentage preference to the server
+                try { 
+                    const connection = await mysql.createConnection(dbConfig);
+                    await connection.execute('UPDATE user_profile SET percent = ? WHERE uid = ?', [percentage, userId]);
+                    await interaction.reply('Preference updated successfully.');
+                } catch (err) {
+                    console.error(err);
+                    await interaction.reply('Failed to update preference.');
                 }
             }
         }
@@ -192,7 +265,10 @@ client.on('interactionCreate', async interaction => {
         }
         await interaction.reply({ content: 'Thank you for your feedback!', ephemeral: true });
     }
-
     // Delete the button message
-    await interaction.message.delete();
+    try {
+        await interaction.message.delete();
+    } catch (error) {
+        console.error('Failed to delete message:', error);
+    }
 });
