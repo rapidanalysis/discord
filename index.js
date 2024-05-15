@@ -158,6 +158,10 @@ client.on('interactionCreate', async interaction => {
                     percent = percentage / 100;
                 }
 
+                if (paragraph.length < 800 && percent < 0.5) {
+                    percent = 0.5;
+                }
+
                 interaction.deferReply({ content: "The Bot is processing", ephemeral: privacy });
                 rapid.makeRequest("POST", "text/to-summary", {
                     "percent": percent,
@@ -172,6 +176,7 @@ client.on('interactionCreate', async interaction => {
             if (commandName === 'sum') {
                 let limitChat = interaction.options.getInteger('limit');
                 limitChat = parseInt(limitChat) + 1;
+                if(limitChat > 100) return interaction.reply("Please provide a number of messages to summarize less than 100.");
 
                 if (!parseInt(limitChat)) return interaction.reply("Please provide a valid number of messages to summarize.");
                 const channel = interaction.channel;
@@ -204,6 +209,10 @@ client.on('interactionCreate', async interaction => {
                         }
                         // Use the percentage value
                         percent = percentage / 100;
+                    }
+
+                    if (paragraph.length < 800 && percent < 0.5) {
+                        percent = 0.5;
                     }
 
                     interaction.deferReply({ content: "The Bot is processing", ephemeral: privacy });
