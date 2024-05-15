@@ -7,11 +7,11 @@ const RapidClient = require("./api");
 
 require('dotenv').config();
 
-const rapid = new RapidClient(process.env.RAPIDANALYSIS_TOKEN);
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { ActionRowBuilder, ButtonBuilder } = require('discord.js');
 const mysql = require('mysql2/promise');
 const dbConfig = require('./dbConfig');
+const fs = require('fs');
 
 client.login(process.env.DISCORD_TOKEN);
 
@@ -22,7 +22,7 @@ let privacy = true;
 let limit = 20;
 
 client.on('ready', () => {
-    console.log("Logged in to Discord.");
+    console.log('Logged in to Discord.');
 
     const regCommand = new SlashCommandBuilder()
         .setName('reg')
@@ -92,7 +92,7 @@ client.on('interactionCreate', async interaction => {
         const apiKey = interaction.options.getString('api_key');
         // Test the API key
         const rapidtest = new RapidClient(apiKey);
-        rapidtest.makeRequest("POST", "generate/text-from-text", { prompt: "test" }).then(async res => {
+        rapidtest.makeRequest('POST', 'generate/text-from-text', { prompt: 'test' }).then(async res => {
             if (!res) {
                 // API key is invalid
                 await interaction.reply('API Key is invalid. Please enter a valid API key.');
@@ -140,15 +140,15 @@ client.on('interactionCreate', async interaction => {
 
             if (commandName === 'ask') {
                 const prompt = interaction.options.getString('prompt');
-                rapid.makeRequest("POST", "generate/text-from-text", { prompt }).then(res => {
+                rapid.makeRequest('POST', 'generate/text-from-text', { prompt }).then(res => {
                     interaction.reply(res.output[0]);
                 })
             }
             if (commandName === 'parasum') {
                 const fulltext = interaction.options.getString('paragraph');
-                if (fulltext.length < 500) return interaction.reply("Text is too short. Please provide a text with more than 500 characters.");
+                if (paragraph.length < 500) return interaction.reply({ content: 'Text is too short. Please provide a text with more than 500 characters.', ephemeral: privacy });
                 if (paragraph.length > 6000) {
-                    interaction.reply("Text is too long. Please provide a text with less than 6000 characters.");
+                    interaction.reply({ content: 'Text is too long. Please provide a text with less than 6000 characters.', ephemeral: privacy });
                     return;
                 }
 
@@ -156,7 +156,7 @@ client.on('interactionCreate', async interaction => {
                 if (percentage) { // Check if the percentage is provided
                     // Check if the percentage is within the range
                     if (percentage < 20 || percentage > 75) {
-                        await interaction.reply('Percentage must be between 20% and 75%');
+                        await interaction.reply({ content: 'Percentage must be between 20% and 75%', ephemeral: privacy });
                         return;
                     }
                     // Use the percentage value
@@ -167,12 +167,20 @@ client.on('interactionCreate', async interaction => {
                     percent = 0.5;
                 }
 
-                interaction.deferReply({ content: "The Bot is processing", ephemeral: privacy });
-                rapid.makeRequest("POST", "text/to-summary", {
-                    "percent": percent,
-                    "fulltext": fulltext
+                interaction.deferReply({ content: 'The Bot is processing', ephemeral: privacy });
+                rapid.makeRequest('POST', 'text/to-summary', {
+                    'percent': percent,
+                    'fulltext': fulltext
                 }).then(res => {
-                    interaction.editReply(res.output[0]); // Edit the initial reply
+                    summaryResult = res.output[0];
+                    if (summaryResult == null) return interaction.editReply('Error. No summary found.');
+                    if (summaryResult.length > 2000) {
+                        fs.writeFileSync('summaryResult.txt', summaryResult);
+                        interaction.editReply('The summary is bigger than 2000 characters. Here is the file:');
+                        interaction.followUp({ files: ['./summaryResult.txt'], ephemeral: privacy });
+                    } else {
+                        interaction.editReply(summaryResult);
+                    }
                 }).catch(err => {
                     console.error(err);
                     // Handle or throw the error as needed
@@ -180,26 +188,26 @@ client.on('interactionCreate', async interaction => {
             }
             if (commandName === 'sum') {
                 let limitChat = interaction.options.getInteger('limit');
-                if (limitChat == null) { 
+                if (limitChat == null) {
                     limitChat = limit;
                 } else {
                     limitChat = parseInt(limitChat);
                 }
-                if(limitChat > 100 || limitChat < 1) return interaction.reply("Please provide a number of messages to summarize less than 100 and larger than 0.");
+                if (limitChat > 100 || limitChat < 1) return interaction.reply({ content: 'Please provide a number of messages to summarize less than 100 and larger than 0.', ephemeral: privacy });
 
-                if (!parseInt(limitChat)) return interaction.reply("Please provide a valid number of messages to summarize.");
+                if (!parseInt(limitChat)) return interaction.reply({ content: 'Please provide a valid number of messages to summarize.', ephemeral: privacy });
                 const channel = interaction.channel;
 
                 try {
                     if (!channel) {
-                        return interaction.reply('There are no messages in this channel.');
+                        return interaction.reply({ content: 'There are no messages in this channel.', ephemeral: privacy });
                     }
-                    if(channel.messages.size < limitChat) {
-                        return interaction.reply('There are less messages than the limit in this channel.');
+                    if (channel.messages.size < limitChat) {
+                        return interaction.reply({ content: 'There are less messages than the limit in this channel.', ephemeral: privacy });
                     }
 
                     const messages = await channel.messages.fetch({ limit: limitChat }); // Fetch last limit messages
-                    
+
                     // Filter and map messages in one step
                     const messageContents = messages.reduce((acc, message) => {
                         if (!message.content.startsWith('/sum') && !message.content.startsWith('/ask') && !message.author.bot) {
@@ -210,9 +218,9 @@ client.on('interactionCreate', async interaction => {
 
                     paragraph = messageContents.join(' '); // Join all messages into a single paragraph
 
-                    if (paragraph.length < 500) return interaction.reply("Text is too short. Please provide a text with more than 500 characters.");
+                    if (paragraph.length < 500) return interaction.reply({ content: 'Text is too short. Please provide a text with more than 500 characters.', ephemeral: privacy });
                     if (paragraph.length > 6000) {
-                        interaction.reply("Text is too long. Please provide a text with less than 6000 characters.");
+                        interaction.reply({ content: 'Text is too long. Please provide a text with less than 6000 characters.', ephemeral: privacy });
                         return;
                     }
 
@@ -220,7 +228,7 @@ client.on('interactionCreate', async interaction => {
                     if (percentage) { // Check if the percentage is provided
                         // Check if the percentage is within the range
                         if (percentage < 20 || percentage > 75) {
-                            await interaction.reply('Percentage must be between 20% and 75%');
+                            await interaction.reply({ content: 'Percentage must be between 20% and 75%', ephemeral: privacy });
                             return;
                         }
                         // Use the percentage value
@@ -231,15 +239,17 @@ client.on('interactionCreate', async interaction => {
                         percent = 0.5;
                     }
 
-                    interaction.deferReply({ content: "The Bot is processing", ephemeral: privacy });
-                    rapid.makeRequest("POST", "text/to-summary", {
-                        "percent": percent,
-                        "fulltext": paragraph
+                    interaction.deferReply({ content: 'The Bot is processing', ephemeral: privacy });
+                    rapid.makeRequest('POST', 'text/to-summary', {
+                        'percent': percent,
+                        'fulltext': paragraph
                     }).then(async res => {
                         summaryResult = res.output[0];
-                        console.log(summaryResult.length);
+                        if (summaryResult == null) return interaction.editReply('Error. No summary found.');
                         if (summaryResult.length > 2000) {
-                            interaction.reply( 'The summary length is too long. Longer than 2000.' );
+                            fs.writeFileSync('summaryResult.txt', summaryResult);
+                            await interaction.editReply('The summary is bigger than 2000 characters. Here is the file:');
+                            await interaction.followUp({ files: ['./summaryResult.txt'], ephemeral: privacy });
                         } else {
                             await interaction.editReply(summaryResult);
                         }
@@ -257,7 +267,7 @@ client.on('interactionCreate', async interaction => {
                             );
 
                         // Send the feedback buttons in a separate message
-                        await interaction.followUp({ content: 'Please provide your feedback:', components: [row], ephemeral: privacy });
+                        await interaction.followUp({ content: 'Please provide your feedback:', components: [row] });
                     })
                 } catch (error) {
                     console.error('Error fetching messages:', error);
@@ -268,23 +278,23 @@ client.on('interactionCreate', async interaction => {
                 let privacies = interaction.options.getBoolean('privacy');
                 let limitChat = interaction.options.getInteger('limit');
 
-                if(limitChat == null) {
+                if (limitChat == null) {
                     limitChat = limit;
                 } else {
-                    if(limitChat > 100 || limitChat < 1) return interaction.reply("Please provide a number of messages to summarize less than 100 and larger than 1.");
+                    if (limitChat > 100 || limitChat < 1) return interaction.reply('Please provide a number of messages to summarize less than 100 and larger than 1.');
                 }
 
                 if (percentage) { // Check if the percentage is provided
                     // Check if the percentage is within the range
                     if (percentage < 20 || percentage > 75) {
-                        await interaction.reply('Percentage must be between 20% and 75%');
+                        interaction.reply('Percentage must be between 20% and 75%');
                         return;
                     }
                     percentage = percentage / 100;
                 } else {
                     percentage = percent;
                 }
-                if(privacies != null) {
+                if (privacies != null) {
                     privacies = !privacy;
                 }
 
@@ -318,10 +328,8 @@ client.on('interactionCreate', async interaction => {
         } catch (err) {
             console.error('Failed to save to database:', err);
         }
-        await interaction.update({ content: 'Thank you for your feedback!' });
+        await interaction.update({ content: 'Thank you for your feedback!', ephemeral: true });
     }
     // Delete the button message
-    if (privacy === false) {
-        await interaction.message.delete();
-    }
+    interaction.message.delete();
 });
