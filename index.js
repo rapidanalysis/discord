@@ -18,7 +18,8 @@ client.login(process.env.DISCORD_TOKEN);
 let paragraph = 'Not Found';
 let summaryResult = 'Not Found';
 let percent = 0.25;
-let privacy = false;
+let privacy = true;
+let limit = 20;
 
 client.on('ready', () => {
     console.log("Logged in to Discord.");
@@ -56,8 +57,8 @@ client.on('ready', () => {
         .setDescription('Summarizes the last n messages in the current channel')
         .addIntegerOption(option =>
             option.setName('limit')
-                .setDescription('Number of messages to summarize')
-                .setRequired(true))
+                .setDescription('Number of messages to summarize. Default is 20. Maximum is 99.')
+                .setRequired(false))
         .addIntegerOption(option =>
             option.setName('percentage')
                 .setDescription('Percentage of summarization to shorten the text to. Default is 25%. Need to be from 20% to 75%')
@@ -73,9 +74,12 @@ client.on('ready', () => {
         .addBooleanOption(option =>
             option.setName('privacy')
                 .setDescription('Set the privacy of the summary. Default is public (TRUE).')
+                .setRequired(false))
+        .addIntegerOption(option =>
+            option.setName('limit')
+                .setDescription('Set the default limit of /sum. Default is 20.')
                 .setRequired(false));
-
-    client.guilds.cache.get('1223195046854266910').commands.set([regCommand, askCommand, parasumCommand, sumCommand, prefCommand]);
+    client.application.commands.set([regCommand, askCommand, parasumCommand, sumCommand, prefCommand]);
 });
 
 client.on('interactionCreate', async interaction => {
@@ -100,7 +104,7 @@ client.on('interactionCreate', async interaction => {
 
                     if (rows.length === 0) {
                         // The user doesn't exist in the table, so insert a new row
-                        await connection.execute('INSERT INTO user_profile (uid, apikey, percent, privacy) VALUES (?, ?, ?, ?)', [userId, apiKey, 0.25, 1]);
+                        await connection.execute('INSERT INTO user_profile (uid, apikey, percent, privacy, limitc) VALUES (?, ?, ?, ?, ?)', [userId, apiKey, 0.25, 1, 20]);
                     } else {
                         // The user already exists in the table, so update the existing row
                         await connection.execute('UPDATE user_profile SET apikey = ? WHERE uid = ?', [apiKey, userId]);
@@ -120,7 +124,7 @@ client.on('interactionCreate', async interaction => {
         // Check if the user is registered
         console.log('Checking if user is registered');
         const connection = await mysql.createConnection(dbConfig);
-        const [rows] = await connection.execute('SELECT apikey, percent, privacy FROM user_profile WHERE uid = ?', [userId]);
+        const [rows] = await connection.execute('SELECT apikey, percent, privacy, limitc FROM user_profile WHERE uid = ?', [userId]);
         await connection.end();
 
         if (rows.length === 0) {
@@ -132,6 +136,7 @@ client.on('interactionCreate', async interaction => {
             const rapid = new RapidClient(apiKey);
             percent = Number(rows[0].percent);
             privacy = !rows[0].privacy;
+            limit = Number(rows[0].limitc);
 
             if (commandName === 'ask') {
                 const prompt = interaction.options.getString('prompt');
@@ -175,15 +180,26 @@ client.on('interactionCreate', async interaction => {
             }
             if (commandName === 'sum') {
                 let limitChat = interaction.options.getInteger('limit');
-                limitChat = parseInt(limitChat) + 1;
-                if(limitChat > 100) return interaction.reply("Please provide a number of messages to summarize less than 100.");
+                if (limitChat == null) { 
+                    limitChat = limit;
+                } else {
+                    limitChat = parseInt(limitChat);
+                }
+                if(limitChat > 100 || limitChat < 1) return interaction.reply("Please provide a number of messages to summarize less than 100 and larger than 0.");
 
                 if (!parseInt(limitChat)) return interaction.reply("Please provide a valid number of messages to summarize.");
                 const channel = interaction.channel;
 
                 try {
-                    const messages = await channel.messages.fetch({ limit: limitChat }); // Fetch last 10 messages
+                    if (!channel) {
+                        return interaction.reply('There are no messages in this channel.');
+                    }
+                    if(channel.messages.size < limitChat) {
+                        return interaction.reply('There are less messages than the limit in this channel.');
+                    }
 
+                    const messages = await channel.messages.fetch({ limit: limitChat }); // Fetch last limit messages
+                    
                     // Filter and map messages in one step
                     const messageContents = messages.reduce((acc, message) => {
                         if (!message.content.startsWith('/sum') && !message.content.startsWith('/ask') && !message.author.bot) {
@@ -220,8 +236,13 @@ client.on('interactionCreate', async interaction => {
                         "percent": percent,
                         "fulltext": paragraph
                     }).then(async res => {
-                        summaryResult = res.output[0]; // Store the summary result
-                        await interaction.editReply(res.output[0]);
+                        summaryResult = res.output[0];
+                        console.log(summaryResult.length);
+                        if (summaryResult.length > 2000) {
+                            interaction.reply( 'The summary length is too long. Longer than 2000.' );
+                        } else {
+                            await interaction.editReply(summaryResult);
+                        }
 
                         const row = new ActionRowBuilder()
                             .addComponents(
@@ -245,6 +266,13 @@ client.on('interactionCreate', async interaction => {
             if (commandName === 'pref') {
                 let percentage = interaction.options.getInteger('percentage');
                 let privacies = interaction.options.getBoolean('privacy');
+                let limitChat = interaction.options.getInteger('limit');
+
+                if(limitChat == null) {
+                    limitChat = limit;
+                } else {
+                    if(limitChat > 100 || limitChat < 1) return interaction.reply("Please provide a number of messages to summarize less than 100 and larger than 1.");
+                }
 
                 if (percentage) { // Check if the percentage is provided
                     // Check if the percentage is within the range
@@ -263,7 +291,7 @@ client.on('interactionCreate', async interaction => {
                 // Save the percentage preference to the server
                 try {
                     const connection = await mysql.createConnection(dbConfig);
-                    await connection.execute('UPDATE user_profile SET percent = ?, privacy = ? WHERE uid = ?', [percentage, privacy, userId]);
+                    await connection.execute('UPDATE user_profile SET percent = ?, privacy = ?, limitc = ? WHERE uid = ?', [percentage, privacy, limitChat, userId]);
                     await interaction.reply('Preference updated successfully.');
                 } catch (err) {
                     console.error(err);
