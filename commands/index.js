@@ -55,8 +55,14 @@ class BaseCommand {
             // User is not registered
             await interaction.reply('You are not registered!\nPlease go to https://rapidanalysis.github.io/getting-started.html to register and get api key\nThen enter /reg + [api key]');
             return false;
+        } else {
+            const apiKey = rows[0].apikey;
+            const rapid = new RapidClient(apiKey);
+            percent = Number(rows[0].percent);
+            privacy = !rows[0].privacy;
+            limit = Number(rows[0].limitc);
+            return {apiKey, rapid, percent, privacy, limit};
         }
-        return true;
     }
 }
 
