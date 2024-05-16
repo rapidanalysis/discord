@@ -49,7 +49,7 @@ class BaseCommand {
     async execute(interaction) {
         // Check if the user is registered
         console.log('Checking if user is registered');
-        const [rows] = await this.#connection.execute('SELECT apikey, percent, privacy, limitc FROM user_profile WHERE uid = ?', [userId]);
+        const [rows] = await this.#connection.execute('SELECT apikey, percent, privacy, limitc FROM user_profile WHERE uid = ?', [interaction.user.id]);
 
         if (rows.length === 0) {
             // User is not registered
