@@ -146,8 +146,9 @@ client.on('interactionCreate', async interaction => {
             }
             if (commandName === 'parasum') {
                 const fulltext = interaction.options.getString('paragraph');
-                if (paragraph.length < 500) return interaction.reply({ content: 'Text is too short. Please provide a text with more than 500 characters.', ephemeral: privacy });
-                if (paragraph.length > 6000) {
+                
+                if (fulltext.length < 500) return interaction.reply({ content: 'Text is too short. Please provide a text with more than 500 characters.', ephemeral: privacy });
+                if (fulltext.length > 6000) {
                     interaction.reply({ content: 'Text is too long. Please provide a text with less than 6000 characters.', ephemeral: privacy });
                     return;
                 }
@@ -163,7 +164,7 @@ client.on('interactionCreate', async interaction => {
                     percent = percentage / 100;
                 }
 
-                if (paragraph.length < 800 && percent < 0.5) {
+                if (fulltext.length < 800 && percent < 0.5) {
                     percent = 0.5;
                 }
 
