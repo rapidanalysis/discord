@@ -49,7 +49,7 @@ client.on('ready', () => {
                 .setRequired(true))
         .addIntegerOption(option =>
             option.setName('percentage')
-                .setDescription('Percentage of summarization to shorten the text to. Default is 25%. Need to be from 10% to 75%')
+                .setDescription('Percentage of summarization to shorten the text to. Default is 25%. Need to be from 20% to 75%')
                 .setRequired(false)); // Make this option not required
 
     const sumCommand = new SlashCommandBuilder()
@@ -146,7 +146,6 @@ client.on('interactionCreate', async interaction => {
             }
             if (commandName === 'parasum') {
                 const fulltext = interaction.options.getString('paragraph');
-                
                 if (fulltext.length < 500) return interaction.reply({ content: 'Text is too short. Please provide a text with more than 500 characters.', ephemeral: privacy });
                 if (fulltext.length > 6000) {
                     interaction.reply({ content: 'Text is too long. Please provide a text with less than 6000 characters.', ephemeral: privacy });
@@ -174,7 +173,7 @@ client.on('interactionCreate', async interaction => {
                     'fulltext': fulltext
                 }).then(res => {
                     summaryResult = res.output[0];
-                    if (summaryResult == null) return interaction.editReply('Error. No summary found.');
+                    if (summaryResult == null || summaryResult.length === 0) return interaction.editReply('Error. No summary found.');
                     if (summaryResult.length > 2000) {
                         fs.writeFileSync('summaryResult.txt', summaryResult);
                         interaction.editReply('The summary is bigger than 2000 characters. Here is the file:');
@@ -246,7 +245,7 @@ client.on('interactionCreate', async interaction => {
                         'fulltext': paragraph
                     }).then(async res => {
                         summaryResult = res.output[0];
-                        if (summaryResult == null) return interaction.editReply('Error. No summary found.');
+                        if (summaryResult == null || summaryResult.length === 0) return interaction.editReply('Error. No summary found.');
                         if (summaryResult.length > 2000) {
                             fs.writeFileSync('summaryResult.txt', summaryResult);
                             await interaction.editReply('The summary is bigger than 2000 characters. Here is the file:');
