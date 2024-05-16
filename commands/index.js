@@ -59,9 +59,9 @@ class BaseCommand {
         } else {
             const apiKey = rows[0].apikey;
             const rapid = new RapidClient(apiKey);
-            percent = Number(rows[0].percent);
-            privacy = !rows[0].privacy;
-            limit = Number(rows[0].limitc);
+            const percent = Number(rows[0].percent);
+            const privacy = !rows[0].privacy;
+            const limit = Number(rows[0].limitc);
             return {apiKey, rapid, percent, privacy, limit};
         }
     }
