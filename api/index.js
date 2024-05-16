@@ -40,7 +40,7 @@ class RESTClient {
                     res.json().then(json => reject(json.message));
                 } else {
                     res.json().then(json => {
-                        const fixedJson = Object.fromEntries(Object.entries(json).map(([key, value]) => {[key.toLowerCase(), value]}));
+                        const fixedJson = Object.fromEntries(Object.entries(json).map(([key, value]) => {return [key.toLowerCase(), value]}));
                         if (typeof fixedJson.output == "string") {
                             fixedJson.output = [fixedJson.output];
                         }
