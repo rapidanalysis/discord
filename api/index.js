@@ -1,3 +1,11 @@
+/**
+ * @typedef {Object} RapidAnalysisResponse
+ * @property {number} version
+ * @property {string[]} output
+ */
+
+const fetch = require("node-fetch");
+
 class RESTClient {
     #apiKey;
 
@@ -15,18 +23,30 @@ class RESTClient {
      * @param {("GET"|"POST"|"PUT"|"PATCH"|"DELETE"|"OPTIONS")} method - The HTTP method to use when fetching. 
      * @param {string} endpoint - The endpoint URL to be fetched. 
      * @param {Object} [body] - JSON payload to be sent when posting. 
-     * @returns {Promise<Object>} - The JSON response from the API. 
+     * @returns {Promise<RapidAnalysisResponse>} - The JSON response from the API. 
      */
     makeRequest(method, endpoint, body) {
         return new Promise((resolve, reject) => {
             fetch(`https://api.weburban.com/${endpoint}`, {
                 method,
-                body,
+                body: JSON.stringify(body),
                 headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
                     "x-api-key": this.#apiKey
                 }
             }).then(res => {
-                res.json().then(json => resolve(json));
+                if (!res.ok) {
+                    res.json().then(json => reject(json.message));
+                } else {
+                    res.json().then(json => {
+                        const fixedJson = Object.fromEntries(Object.entries(json).map(([key, value]) => {return [key.toLowerCase(), value]}));
+                        if (typeof fixedJson.output == "string") {
+                            fixedJson.output = [fixedJson.output];
+                        }
+                        resolve(fixedJson);
+                    });
+                }     
             }).catch(err => reject(err));
         });
     }
