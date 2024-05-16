@@ -1,4 +1,5 @@
 const { SlashCommandBuilder, Client, REST, Routes, BaseInteraction, ChatInputCommandInteraction } = require("discord.js");
+const RapidClient = require("../api");
 
 class CommandManager {
     #commands = new Map();
