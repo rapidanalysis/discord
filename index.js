@@ -12,6 +12,8 @@ const { ActionRowBuilder, ButtonBuilder } = require('discord.js');
 const mysql = require('mysql2/promise');
 const dbConfig = require('./dbConfig');
 const fs = require('fs');
+const RegisterCommand = require("./commands/registerCommand");
+const { CommandManager } = require("./commands");
 
 client.login(process.env.DISCORD_TOKEN);
 
@@ -20,17 +22,15 @@ let summaryResult = 'Not Found';
 let percent = 0.25;
 let privacy = true;
 let limit = 20;
+let connection;
+let commandManager;
 
-client.on('ready', () => {
+client.on('ready', async () => {
     console.log('Logged in to Discord.');
 
-    const regCommand = new SlashCommandBuilder()
-        .setName('reg')
-        .setDescription('Registers user')
-        .addStringOption(option =>
-            option.setName('api_key')
-                .setDescription('Rapid Analysis API Key')
-                .setRequired(true));
+    connection = await mysql.createConnection(dbConfig);
+
+    const regCommand = new RegisterCommand(connection);
 
     const askCommand = new SlashCommandBuilder()
         .setName('ask')
@@ -79,47 +79,18 @@ client.on('ready', () => {
             option.setName('limit')
                 .setDescription('Set the default limit of /sum. Default is 20.')
                 .setRequired(false));
-    client.application.commands.set([regCommand, askCommand, parasumCommand, sumCommand, prefCommand]);
+    //client.application.commands.set([regCommand, askCommand, parasumCommand, sumCommand, prefCommand]);
+
+    commandManager = new CommandManager(client, [regCommand]);
 });
 
 client.on('interactionCreate', async interaction => {
     if (!interaction.isCommand()) return;
 
-    const { commandName } = interaction;
-    const userId = interaction.user.id;
+    commandManager.execute(interaction)
 
-    if (commandName === 'reg') {
-        const apiKey = interaction.options.getString('api_key');
-        // Test the API key
-        const rapidtest = new RapidClient(apiKey);
-        rapidtest.makeRequest('POST', 'generate/text-from-text', { prompt: 'test' }).then(async res => {
-            if (!res) {
-                // API key is invalid
-                await interaction.reply('API Key is invalid. Please enter a valid API key.');
-            } else {
-                // API key is valid, save it to the database
-                try {
-                    const connection = await mysql.createConnection(dbConfig);
-                    const [rows] = await connection.execute('SELECT * FROM user_profile WHERE uid = ?', [userId]);
-
-                    if (rows.length === 0) {
-                        // The user doesn't exist in the table, so insert a new row
-                        await connection.execute('INSERT INTO user_profile (uid, apikey, percent, privacy, limitc) VALUES (?, ?, ?, ?, ?)', [userId, apiKey, 0.25, 1, 20]);
-                    } else {
-                        // The user already exists in the table, so update the existing row
-                        await connection.execute('UPDATE user_profile SET apikey = ? WHERE uid = ?', [apiKey, userId]);
-                    }
-                    await connection.end();
-
-                    // Delete the user's reply
-                    const userReply = await interaction.reply({ content: 'API Key updated successfully.', fetchReply: true });
-                    setTimeout(() => userReply.delete(), 2000); // Delete after 2 seconds
-                } catch (err) {
-                    console.error(err);
-                    await interaction.reply('Failed to update API Key.');
-                }
-            }
-        });
+    /* if (commandName === 'reg') {
+        return 1;
     } else {
         // Check if the user is registered
         console.log('Checking if user is registered');
@@ -309,7 +280,7 @@ client.on('interactionCreate', async interaction => {
                 }
             }
         }
-    }
+    } */
 });
 
 client.on('interactionCreate', async interaction => {

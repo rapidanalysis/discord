@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, Client, REST, Routes, BaseInteraction } = require("discord.js");
+const { SlashCommandBuilder, Client, REST, Routes, BaseInteraction, ChatInputCommandInteraction } = require("discord.js");
 
 class CommandManager {
     #commands = new Map();
@@ -15,6 +15,14 @@ class CommandManager {
             commandJson.push(command.data.toJSON());
         });
         new REST().setToken(client.token).put(Routes.applicationCommands(client.user.id), { body: commandJson });
+    }
+
+    /**
+     * 
+     * @param {ChatInputCommandInteraction} interaction 
+     */
+    async execute(interaction) {
+        return this.#commands.get(interaction.commandName).execute(interaction);
     }
 }
 
