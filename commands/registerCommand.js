@@ -32,14 +32,14 @@ class RegisterCommand extends BaseCommand {
             } else {
                 // API key is valid, save it to the database
                 try {
-                    const [rows] = await this.connection.execute('SELECT * FROM user_profile WHERE uid = ?', [interaction.user.id]);
+                    const [rows] = await this.#connection.execute('SELECT * FROM user_profile WHERE uid = ?', [interaction.user.id]);
 
                     if (rows.length === 0) {
                         // The user doesn't exist in the table, so insert a new row
-                        await this.connection.execute('INSERT INTO user_profile (uid, apikey, percent, privacy, limitc) VALUES (?, ?, ?, ?, ?)', [userId, apiKey, 0.25, 1, 20]);
+                        await this.#connection.execute('INSERT INTO user_profile (uid, apikey, percent, privacy, limitc) VALUES (?, ?, ?, ?, ?)', [interaction.user.id, apiKey, 0.25, 1, 20]);
                     } else {
                         // The user already exists in the table, so update the existing row
-                        await this.connection.execute('UPDATE user_profile SET apikey = ? WHERE uid = ?', [apiKey, interaction.user.id]);
+                        await this.#connection.execute('UPDATE user_profile SET apikey = ? WHERE uid = ?', [apiKey, interaction.user.id]);
                     }
 
                     // Delete the user's reply
