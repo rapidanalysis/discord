@@ -14,6 +14,7 @@ const dbConfig = require('./dbConfig');
 const fs = require('fs');
 const RegisterCommand = require("./commands/registerCommand");
 const AskCommand = require("./commands/askCommand");
+const ParagraphSummaryCommand = require("./commands/paragraphSummaryCommand");
 const { CommandManager } = require("./commands");
 
 client.login(process.env.DISCORD_TOKEN);
@@ -33,18 +34,7 @@ client.on('ready', async () => {
 
     const regCommand = new RegisterCommand(connection);
     const askCommand = new AskCommand(connection);
-
-    const parasumCommand = new SlashCommandBuilder()
-        .setName('parasum')
-        .setDescription('Summarizes a given paragraph')
-        .addStringOption(option =>
-            option.setName('paragraph')
-                .setDescription('The paragraph to summarize')
-                .setRequired(true))
-        .addIntegerOption(option =>
-            option.setName('percentage')
-                .setDescription('Percentage of summarization to shorten the text to. Default is 25%. Need to be from 20% to 75%')
-                .setRequired(false)); // Make this option not required
+    const parasumCommand = new ParagraphSummaryCommand(connection);
 
     const sumCommand = new SlashCommandBuilder()
         .setName('sum')
@@ -75,7 +65,7 @@ client.on('ready', async () => {
                 .setRequired(false));
     //client.application.commands.set([regCommand, askCommand, parasumCommand, sumCommand, prefCommand]);
 
-    commandManager = new CommandManager(client, [regCommand, askCommand]);
+    commandManager = new CommandManager(client, [regCommand, askCommand, parasumCommand]);
 });
 
 client.on('interactionCreate', async interaction => {
