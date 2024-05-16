@@ -16,6 +16,7 @@ const RegisterCommand = require("./commands/registerCommand");
 const AskCommand = require("./commands/askCommand");
 const ParagraphSummaryCommand = require("./commands/paragraphSummaryCommand");
 const { CommandManager } = require("./commands");
+const SummaryCommand = require("./commands/summaryCommand");
 
 client.login(process.env.DISCORD_TOKEN);
 
@@ -35,18 +36,7 @@ client.on('ready', async () => {
     const regCommand = new RegisterCommand(connection);
     const askCommand = new AskCommand(connection);
     const parasumCommand = new ParagraphSummaryCommand(connection);
-
-    const sumCommand = new SlashCommandBuilder()
-        .setName('sum')
-        .setDescription('Summarizes the last n messages in the current channel')
-        .addIntegerOption(option =>
-            option.setName('limit')
-                .setDescription('Number of messages to summarize. Default is 20. Maximum is 99.')
-                .setRequired(false))
-        .addIntegerOption(option =>
-            option.setName('percentage')
-                .setDescription('Percentage of summarization to shorten the text to. Default is 25%. Need to be from 20% to 75%')
-                .setRequired(false)); // Make this option not required
+    const sumCommand = new SummaryCommand(connection);
 
     const prefCommand = new SlashCommandBuilder()
         .setName('pref')
@@ -65,7 +55,7 @@ client.on('ready', async () => {
                 .setRequired(false));
     //client.application.commands.set([regCommand, askCommand, parasumCommand, sumCommand, prefCommand]);
 
-    commandManager = new CommandManager(client, [regCommand, askCommand, parasumCommand]);
+    commandManager = new CommandManager(client, [regCommand, askCommand, parasumCommand, sumCommand]);
 });
 
 client.on('interactionCreate', async interaction => {
