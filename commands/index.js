@@ -1,13 +1,44 @@
-class CommandManager {
-    #commands = [];
+const { SlashCommandBuilder, Client, REST, Routes, BaseInteraction } = require("discord.js");
 
-    constructor(client) {
-        this.#commands.forEach(command => {
-            client.on("interactionCreate", i => {
-                command.handleInteraction(i);
-            })
-        })
+class CommandManager {
+    #commands = new Map();
+
+    /**
+     * 
+     * @param {Client} client 
+     * @param {BaseCommand[]} commandList 
+     */
+    constructor(client, commandList) {
+        let commandJson = [];
+        commandList.forEach(command => {
+            this.#commands.set(command.name, command);
+            commandJson.push(command.data.toJSON());
+        });
+        new REST().setToken(client.token).put(Routes.applicationCommands(client.user.id), { body: commandJson });
     }
 }
 
-module.exports = CommandManager;
+class BaseCommand {
+    name = "basecommand";
+    data = new SlashCommandBuilder();
+
+    /**
+     * Construct a new Command.
+     * @param {SlashCommandBuilder} command - The command.
+     */
+    constructor(command) {
+        this.data = command;
+        this.name = command.name;
+    }
+
+    /**
+     * Command logic to handle execution.
+     * @param {BaseInteraction} interaction - The interaction that comes from Discord.
+     */
+    async execute(interaction) {
+        await interaction.reply("test");
+    }
+}
+
+module.exports.CommandManager = CommandManager;
+module.exports.BaseCommand = BaseCommand;
