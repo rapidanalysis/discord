@@ -13,6 +13,7 @@ const mysql = require('mysql2/promise');
 const dbConfig = require('./dbConfig');
 const fs = require('fs');
 const RegisterCommand = require("./commands/registerCommand");
+const AskCommand = require("./commands/askCommand");
 const { CommandManager } = require("./commands");
 
 client.login(process.env.DISCORD_TOKEN);
@@ -31,14 +32,7 @@ client.on('ready', async () => {
     connection = await mysql.createConnection(dbConfig);
 
     const regCommand = new RegisterCommand(connection);
-
-    const askCommand = new SlashCommandBuilder()
-        .setName('ask')
-        .setDescription('Generates text from a given prompt')
-        .addStringOption(option =>
-            option.setName('prompt')
-                .setDescription('The prompt to generate text from')
-                .setRequired(true));
+    const askCommand = new AskCommand(connection);
 
     const parasumCommand = new SlashCommandBuilder()
         .setName('parasum')
@@ -81,7 +75,7 @@ client.on('ready', async () => {
                 .setRequired(false));
     //client.application.commands.set([regCommand, askCommand, parasumCommand, sumCommand, prefCommand]);
 
-    commandManager = new CommandManager(client, [regCommand]);
+    commandManager = new CommandManager(client, [regCommand, askCommand]);
 });
 
 client.on('interactionCreate', async interaction => {
