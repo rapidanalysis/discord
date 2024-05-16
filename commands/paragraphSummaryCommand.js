@@ -1,6 +1,5 @@
 const { BaseCommand } = require(".");
-const { SlashCommandBuilder, ChatInputCommandInteraction } = require("discord.js");
-const fs = require("fs");
+const { SlashCommandBuilder, ChatInputCommandInteraction, AttachmentBuilder } = require("discord.js");
 
 class ParagraphSummaryCommand extends BaseCommand {
     #connection;
@@ -60,7 +59,10 @@ class ParagraphSummaryCommand extends BaseCommand {
             if (summaryResult == null || summaryResult.length === 0) return interaction.editReply('Error. No summary found.');
             if (summaryResult.length > 2000) {
                 interaction.editReply('The summary is bigger than 2000 characters. Here is the file:');
-                interaction.followUp({ files: { name: "summaryResult.txt", data: summaryResult}, ephemeral: privacy });
+                let file = new AttachmentBuilder()
+                    .setFile(Buffer.from(summaryResult, "utf-8"))
+                    .setName("summaryResult.txt");
+                interaction.followUp({ files: [file], ephemeral: privacy });
             } else {
                 interaction.editReply(summaryResult);
             }
