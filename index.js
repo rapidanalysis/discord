@@ -32,7 +32,7 @@ let commandManager;
 client.on('ready', async () => {
     console.log('Logged in to Discord.');
 
-    connection = await mysql.createConnection(dbConfig);
+    connection = await mysql.createPool(dbConfig);
 
     const regCommand = new RegisterCommand(connection);
     const askCommand = new AskCommand(connection);
