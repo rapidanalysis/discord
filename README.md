@@ -66,6 +66,8 @@ The RapidAnalysis Text Bot is a Discord chatbot designed to automatically summar
 <img src="https://github.com/rapidanalysis/discord/blob/prototype/documents/Images/Screenshot%202024-05-19%20at%202.52.35%20pm.png" width="300" height="500">  
 	Fig 1: A screenshot of a bot invitation pop-up with 'authorise' button highlighted.
 
+
 That's it! In just two simple steps, the bot will be installed on your server. You can now start interacting with the bot and utilize its summarization features.
-<img src="https://github.com/rapidanalysis/discord/blob/prototype/documents/Images/Screenshot%202024-05-19%20at%202.55.24%20pm.png" width="300" height="500"> 
+
+<img src="https://github.com/rapidanalysis/discord/blob/prototype/documents/Images/Screenshot%202024-05-19%20at%202.55.24%20pm.png" width="300" height="300"> 
 	Fig 2: Screenshot of a success pop-up indicating that the bot has been successfully added to the selected server.
