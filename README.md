@@ -44,4 +44,28 @@ The RapidAnalysis Text Bot is a Discord chatbot designed to automatically summar
 		    - **Details**: This option sets how much the text should be condensed in the summary. The default value is 25%, meaning the summary will be approximately 25% of the original text's length. The allowed range is from 20% to 75%.
 
 
+## Installation
 
+### Requirements
+
+- A Discord account
+- A Discord server where you have admin privileges
+
+### Bot Installation
+
+1. **Bot Invite Link**:
+    
+    - Click on the following [invite link](https://canary.discord.com/oauth2/authorize?client_id=1213473267457724416&scope=applications.commands%20bot&integration_type=0).
+    
+    
+2. **Authorise the Bot**:
+    
+    - In the "ADD TO SERVER" field, select the desired server where you want to add the bot.
+    - Click the "Authorize" button.
+      
+<img src="https://github.com/rapidanalysis/discord/blob/prototype/documents/Images/Screenshot%202024-05-19%20at%202.52.35%20pm.png" width="300" height="500">  
+	Fig 1: A screenshot of a bot invitation pop-up with 'authorise' button highlighted.
+
+That's it! In just two simple steps, the bot will be installed on your server. You can now start interacting with the bot and utilize its summarization features.
+<img src="https://github.com/rapidanalysis/discord/blob/prototype/documents/Images/Screenshot%202024-05-19%20at%202.55.24%20pm.png" width="300" height="500"> 
+	Fig 2: Screenshot of a success pop-up indicating that the bot has been successfully added to the selected server.
