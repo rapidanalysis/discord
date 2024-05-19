@@ -71,3 +71,24 @@ That's it! In just two simple steps, the bot will be installed on your server. Y
 
 <img src="https://github.com/rapidanalysis/discord/blob/prototype/documents/Images/Screenshot%202024-05-19%20at%202.55.24%20pm.png" width="300" height="300"> 
 	Fig 2: Screenshot of a success pop-up indicating that the bot has been successfully added to the selected server.
+
+## Usage
+
+<img src="https://github.com/rapidanalysis/discord/blob/prototype/documents/Images/U1.png" width="600" height="300">
+Fig 1: A snapshot of a discord server
+
+The user interface presented is the classic Discord server interface, which is characterised by its user-friendly and intuitive design. The layout typically features a column on the far left that lists the server name at the top — in this case, ‘rapidanalysis group 26’ — followed by a list of text and voice channels. Here, there are two text channels: ‘general’ for regular conversations and ‘bot’ for interactions with the bot. 
+
+Creating a separate channel for bot queries, like the ‘bot’ channel seen here, is highly recommended to keep bot interactions organised. By creating a separate channel specifically for bot interactions, users can issue commands and receive summaries without cluttering other channels where different discussions are taking place.
+
+<img src="https://github.com/rapidanalysis/discord/blob/prototype/documents/Images/U2.png" width="600" height="500">
+Fig 2: A drop-down table displaying a range of commands
+
+typing '/' into the chat text field triggers a drop-down table displaying a range of commands, including 'summarise' and 'preference', for easy access and efficiency.
+
+A response from the bot will be a reply to its corresponding request message. 
+
+<img src="https://github.com/rapidanalysis/discord/blob/prototype/documents/Images/U3.png" width="500" height="500">
+Fig 3: An example of the bot's responses to user requests 
+
+
