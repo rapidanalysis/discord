@@ -4,18 +4,19 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node ."
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/crpz1/rapidanalysis-discord.git"
+    "url": "git+https://github.com/rapidanalysis/discord.git"
   },
   "author": "",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/crpz1/rapidanalysis-discord/issues"
+    "url": "https://github.com/rapidanalysis/discord/issues"
   },
-  "homepage": "https://github.com/crpz1/rapidanalysis-discord#readme",
+  "homepage": "https://github.com/rapidanalysis/discord#readme",
   "dependencies": {
     "discord.js": "^14.14.1",
     "dotenv": "^16.4.5",
