@@ -26,6 +26,8 @@ class ParagraphSummaryCommand extends BaseCommand {
     async execute(interaction) {
         const state = await super.execute(interaction);
         const fulltext = interaction.options.getString('paragraph');
+        let percent = state.percent;
+        let privacy = state.privacy;
         if (fulltext.length < 500) return interaction.reply({ content: 'Text is too short. Please provide a text with more than 500 characters.', ephemeral: privacy });
         if (fulltext.length > 6000) {
             interaction.reply({ content: 'Text is too long. Please provide a text with less than 6000 characters.', ephemeral: privacy });
@@ -33,8 +35,6 @@ class ParagraphSummaryCommand extends BaseCommand {
         }
 
         const percentageFromCommand = interaction.options.getInteger('percentage');
-        let percent = state.percent;
-        let privacy = state.privacy;
         let summaryResult = "Not Found";
         if (percentageFromCommand) { // Check if the percentage is provided
             // Check if the percentage is within the range
