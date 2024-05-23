@@ -2,7 +2,6 @@ const { BaseCommand } = require(".");
 const { SlashCommandBuilder, ChatInputCommandInteraction } = require("discord.js");
 
 class AskCommand extends BaseCommand {
-    #connection;
 
     constructor(connection) {
         const command = new SlashCommandBuilder()

@@ -2,7 +2,6 @@ const { BaseCommand } = require(".");
 const { SlashCommandBuilder, ChatInputCommandInteraction, AttachmentBuilder, ActionRowBuilder, ButtonBuilder } = require("discord.js");
 
 class SummaryCommand extends BaseCommand {
-    #connection;
 
     constructor(connection) {
         const command = new SlashCommandBuilder()

@@ -3,7 +3,6 @@ const RapidClient = require("../api");
 const { SlashCommandBuilder, ChatInputCommandInteraction } = require("discord.js");
 
 class RegisterCommand extends BaseCommand {
-    #connection;
 
     constructor(connection) {
         const command = new SlashCommandBuilder()
