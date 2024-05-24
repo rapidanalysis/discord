@@ -43,7 +43,7 @@ class AskCommand extends BaseCommand {
     }
 
     /**
-     * 
+     * Build context for the LLM from a collection of messages.
      * @param {Collection<import("discord.js").Snowflake, Message>} messages 
      */
     async buildContext(messages) {
