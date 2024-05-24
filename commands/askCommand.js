@@ -1,5 +1,5 @@
 const { BaseCommand } = require(".");
-const { SlashCommandBuilder, ChatInputCommandInteraction } = require("discord.js");
+const { SlashCommandBuilder, ChatInputCommandInteraction, Collection, Message } = require("discord.js");
 
 class AskCommand extends BaseCommand {
 
@@ -10,7 +10,10 @@ class AskCommand extends BaseCommand {
         .addStringOption(option =>
             option.setName('prompt')
                 .setDescription('The prompt to generate text from')
-                .setRequired(true));
+                .setRequired(true))
+        .addBooleanOption(option => 
+            option.setName("context")
+                .setDescription("Use the last 100 chat messages as context"));
         super(command, connection);
     }
 
@@ -24,9 +27,38 @@ class AskCommand extends BaseCommand {
             return;
         }
         const prompt = interaction.options.getString('prompt');
-        state.rapid.makeRequest('POST', 'generate/text-from-text', { prompt }).then(res => {
-            interaction.reply(res.output[0]);
+        let body = { prompt };
+        if (interaction.options.getBoolean("context")) {
+            await interaction.deferReply({ ephemeral: state.privacy });
+            const messages = await interaction.channel.messages.fetch({ limit: 99, cache: false });
+            body.text = await this.buildContext(messages);
+        }
+        state.rapid.makeRequest('POST', 'generate/text-from-text', body).then(res => {
+            if (interaction.deferred) {
+                interaction.editReply({ content: res.output[0], ephemeral: state.privacy });
+            } else {
+                interaction.reply({ content: res.output[0], ephemeral: state.privacy });
+            }  
         })
+    }
+
+    /**
+     * 
+     * @param {Collection<import("discord.js").Snowflake, Message>} messages 
+     */
+    async buildContext(messages) {
+        let context = [];
+        messages.forEach(message => {
+            let user = message.guild.members.cache.get(message.author.id);
+            if (user == undefined) {
+                user = message.author.displayName;
+            } else {
+                user = user.nickname;
+            }
+            context.push(`${user} says: ${message.cleanContent}`);
+        });
+        context.reverse();
+        return context.join("\n");
     }
 }
 
