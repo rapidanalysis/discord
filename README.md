@@ -9,6 +9,10 @@ The RapidAnalysis Text Bot is a Discord chatbot designed to automatically summar
 - **/ask**
 	- **Description**: Generates text from a given prompt.
 	- **Explanation**: This command is used to produce text based on a specific input provided by the user
+ 	- **Option for /ask**:
+  		- **context**: 	
+	  		- **Description**: the last 100 chat messages as context
+	  		- **Details**: '**context**' When enabled, the bot will use the last 100 chat messages as context to generate a more relevant and informed response based on the ongoing conversation.
 -  **/parasum**
     - **Description**: Summarises a given paragraph.
     - **Explanation**: This command is designed to take a paragraph of text and condense it into a shorter summary. It is useful for quickly understanding the main points of a lengthy paragraph.
