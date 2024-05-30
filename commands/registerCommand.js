@@ -25,7 +25,7 @@ class RegisterCommand extends BaseCommand {
         const apiKey = interaction.options.getString('api_key');
         // Test the API key
         const rapidtest = new RapidClient(apiKey);
-        await interaction.deferReply();
+        await interaction.deferReply({ ephemeral: true });
         rapidtest.makeRequest('POST', 'generate/text-from-text', { prompt: 'test' }).then(async res => {
             if (!res) {
                 // API key is invalid
@@ -44,16 +44,15 @@ class RegisterCommand extends BaseCommand {
                     }
 
                     // Delete the user's reply
-                    const userReply = await interaction.editReply({ content: 'API Key updated successfully.', fetchReply: true });
-                    setTimeout(() => userReply.delete(), 2000); // Delete after 2 seconds
+                    await interaction.editReply({ content: 'API Key updated successfully.', fetchReply: true, ephemeral: true });
                 } catch (err) {
                     console.error(err);
-                    await interaction.editReply('Failed to update API Key.');
+                    await interaction.editReply('Failed to update API Key.', { ephemeral: true });
                 }
             }
         }).catch(async () => {
             // API key is invalid
-            await interaction.editReply('API Key is invalid. Please enter a valid API key.');
+            await interaction.editReply('API Key is invalid. Please enter a valid API key.', { ephemeral: true });
         });
     }
 }
