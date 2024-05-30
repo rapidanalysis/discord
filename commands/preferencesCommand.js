@@ -58,7 +58,7 @@ class PreferencesCommand extends BaseCommand {
             percentage = percent;
         }
         if (privacies != null) {
-            privacies = !privacy;
+            privacy = !privacies;
         }
 
         // Save the percentage preference to the server
