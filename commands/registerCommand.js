@@ -25,10 +25,11 @@ class RegisterCommand extends BaseCommand {
         const apiKey = interaction.options.getString('api_key');
         // Test the API key
         const rapidtest = new RapidClient(apiKey);
+        await interaction.deferReply();
         rapidtest.makeRequest('POST', 'generate/text-from-text', { prompt: 'test' }).then(async res => {
             if (!res) {
                 // API key is invalid
-                await interaction.reply('API Key is invalid. Please enter a valid API key.');
+                await interaction.editReply('API Key is invalid. Please enter a valid API key.');
             } else {
                 // API key is valid, save it to the database
                 try {
@@ -43,11 +44,11 @@ class RegisterCommand extends BaseCommand {
                     }
 
                     // Delete the user's reply
-                    const userReply = await interaction.reply({ content: 'API Key updated successfully.', fetchReply: true });
+                    const userReply = await interaction.editReply({ content: 'API Key updated successfully.', fetchReply: true });
                     setTimeout(() => userReply.delete(), 2000); // Delete after 2 seconds
                 } catch (err) {
                     console.error(err);
-                    await interaction.reply('Failed to update API Key.');
+                    await interaction.editReply('Failed to update API Key.');
                 }
             }
         });
