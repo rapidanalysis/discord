@@ -14,7 +14,7 @@ class PreferencesCommand extends BaseCommand {
                     .setRequired(false))
             .addBooleanOption(option =>
                 option.setName('privacy')
-                    .setDescription('Set the privacy of the summary. Default is public (TRUE).')
+                    .setDescription('Set the privacy of the summary. Default is public (False).')
                     .setRequired(false))
             .addIntegerOption(option =>
                 option.setName('limit')
