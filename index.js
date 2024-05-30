@@ -3,15 +3,11 @@ const Intents = Discord.GatewayIntentBits;
 const client = new Discord.Client({
     intents: [Intents.Guilds, Intents.GuildMessages, Intents.MessageContent]
 });
-const RapidClient = require("./api");
 
 require('dotenv').config();
 
-const { SlashCommandBuilder } = require('@discordjs/builders');
-const { ActionRowBuilder, ButtonBuilder } = require('discord.js');
 const mysql = require('mysql2/promise');
 const dbConfig = require('./dbConfig');
-const fs = require('fs');
 const RegisterCommand = require("./commands/registerCommand");
 const AskCommand = require("./commands/askCommand");
 const ParagraphSummaryCommand = require("./commands/paragraphSummaryCommand");
