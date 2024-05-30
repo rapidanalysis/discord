@@ -54,6 +54,7 @@ class AskCommand extends BaseCommand {
                 user = message.author.displayName;
             } else {
                 user = user.nickname;
+                if (user == null) user = message.author.displayName;
             }
             context.push(`${user} says: ${message.cleanContent}`);
         });
