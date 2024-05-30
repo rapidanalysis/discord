@@ -18,7 +18,6 @@ const PreferencesCommand = require("./commands/preferencesCommand");
 client.login(process.env.DISCORD_TOKEN);
 
 let paragraph = 'Not Found';
-let summaryResult = 'Not Found';
 let connection;
 let commandManager;
 
@@ -50,6 +49,7 @@ client.on('interactionCreate', async interaction => {
     } else if (interaction.customId === 'negative') {
         // Save the summary result to the database
         try {
+            const summaryResult = (await interaction.message.fetchReference()).cleanContent;
             const connection = await mysql.createConnection(dbConfig);
             const sql = 'INSERT INTO negative_feedback (summary, paragraph) VALUES (?, ?)';
             await connection.execute(sql, [summaryResult, paragraph]);
