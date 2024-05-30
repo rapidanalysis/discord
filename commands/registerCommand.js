@@ -51,6 +51,9 @@ class RegisterCommand extends BaseCommand {
                     await interaction.editReply('Failed to update API Key.');
                 }
             }
+        }).catch(async () => {
+            // API key is invalid
+            await interaction.editReply('API Key is invalid. Please enter a valid API key.');
         });
     }
 }
