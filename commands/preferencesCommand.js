@@ -21,6 +21,7 @@ class PreferencesCommand extends BaseCommand {
                     .setDescription('Set the default limit of /sum. Default is 20.')
                     .setRequired(false));
         super(command, connection);
+        this.#connection = connection;
     }
 
     /**
